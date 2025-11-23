@@ -1,6 +1,7 @@
 import numpy as np
 from direct.showbase.ShowBase import ShowBase
-from panda3d.core import NodePath, AmbientLight, DirectionalLight, Vec3, Vec4
+from panda3d.core import AmbientLight, DirectionalLight, Vec3, Vec4
+from panda3d.core import ClockObject, PerlinNoise2
 from direct.task import Task
 
 
@@ -12,6 +13,12 @@ class PandaRender(ShowBase):
     
     def __init__(self):
         super().__init__()
+        # Reloj
+        globalClock.setMode(ClockObject.MLimited)
+        globalClock.setFrameRate(60)
+
+        # Ruido
+        self.noise = PerlinNoise2()
         
         # Dictionary to store object references and their visual representations
         self.tracked_objects = {}
@@ -184,3 +191,15 @@ class PandaRender(ShowBase):
             mayChange=True
         )
         return text_obj
+    
+    def getTime(self):
+        """
+        Devuelve el frame de la Simulacion
+        """
+        return globalClock.getFrameTime()
+    
+    def getNoise(self,time):
+        """
+        Devuelve un valor de ruido interpolado
+        """
+        return self.noise.noise(time, 0)
