@@ -63,6 +63,8 @@ def sim_posiciones():
 
     linkFin.paso(dt, k=200, damping=1.0, gravedad=np.array(g))
 
+    print("a")
+
 # Bucle while
 def simulacion(task):
     """

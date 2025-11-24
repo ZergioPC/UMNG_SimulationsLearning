@@ -24,6 +24,7 @@ class PandaRender(ShowBase):
         # Dictionary to store object references and their visual representations
         self.tracked_objects = {}
         # Dictionary to store line connections between objects
+        # Estructura: {(obj, parent): (LineSegs, NodePath)}
         self.connection_lines = {}
         
         # Set up camera
@@ -80,12 +81,13 @@ class PandaRender(ShowBase):
         # Store reference
         self.tracked_objects[obj] = model
         
-        # Create connection line if object has a parent
+        # Create connection line if object has a parent1
         if hasattr(obj, 'parent1') and obj.parent1 is not None:
-            self._create_connection_line(obj,obj.parent1)
+            self._create_connection_line(obj, obj.parent1)
         
+        # Create connection line if object has a parent2
         if hasattr(obj, 'parent2') and obj.parent2 is not None:
-            self._create_connection_line(obj,obj.parent2)
+            self._create_connection_line(obj, obj.parent2)
     
     def _create_connection_line(self, obj:Link, parent:Link):
         """Create a line connecting an object to its parent"""
@@ -95,7 +97,7 @@ class PandaRender(ShowBase):
         # Create line segments
         lines = LineSegs()
         lines.setThickness(4.0)
-        lines.setColor(1, 1, 0, 1)  # White color
+        lines.setColor(1, 1, 0, 1)  # Yellow color
         
         # Draw initial line
         lines.moveTo(parent.x[0], parent.x[1], parent.x[2])
@@ -105,15 +107,16 @@ class PandaRender(ShowBase):
         line_node = lines.create()
         line_np = self.render.attachNewNode(line_node)
         
-        # Store reference
-        self.connection_lines[obj] = (lines, line_np)
+        # Store reference using tuple (obj, parent) as key
+        self.connection_lines[(obj, parent)] = (lines, line_np)
     
     def _update_connection_line(self, obj:Link, parent:Link):
         """Update the line connecting an object to its parent"""
-        if obj not in self.connection_lines:
+        key = (obj, parent)
+        if key not in self.connection_lines:
             return
         
-        lines, line_np = self.connection_lines[obj]
+        lines, line_np = self.connection_lines[key]
         
         # Remove old line
         line_np.removeNode()
@@ -121,9 +124,9 @@ class PandaRender(ShowBase):
         # Create new line with updated positions
         lines = LineSegs()
         lines.setThickness(4.0)
-        lines.setColor(1, 1, 0, 1)  # White color
+        lines.setColor(1, 1, 0, 1)  # Yellow color
         
-        # Draw initial line
+        # Draw line from parent to object
         lines.moveTo(parent.x[0], parent.x[1], parent.x[2])
         lines.drawTo(obj.x[0], obj.x[1], obj.x[2])
         
@@ -132,7 +135,7 @@ class PandaRender(ShowBase):
         line_np = self.render.attachNewNode(line_node)
         
         # Update stored reference
-        self.connection_lines[obj] = (lines, line_np)
+        self.connection_lines[key] = (lines, line_np)
     
     def remove_object(self, obj):
         """Remove an object from the renderer"""
@@ -140,11 +143,12 @@ class PandaRender(ShowBase):
             self.tracked_objects[obj].removeNode()
             del self.tracked_objects[obj]
         
-        # Remove connection line if exists
-        if obj in self.connection_lines:
-            _, line_np = self.connection_lines[obj]
+        # Remove all connection lines associated with this object
+        keys_to_remove = [key for key in self.connection_lines if obj in key]
+        for key in keys_to_remove:
+            _, line_np = self.connection_lines[key]
             line_np.removeNode()
-            del self.connection_lines[obj]
+            del self.connection_lines[key]
     
     def update_objects(self, task):
         """Update all tracked objects' positions (called every frame)"""
@@ -152,10 +156,11 @@ class PandaRender(ShowBase):
             # Update position based on object's current xyz attributes
             model.setPos(obj.x[0], obj.x[1], obj.x[2])
             
-            # Update connection line if object has parent
+            # Update connection line if object has parent1
             if hasattr(obj, 'parent1') and obj.parent1 is not None:
                 self._update_connection_line(obj, obj.parent1)
 
+            # Update connection line if object has parent2
             if hasattr(obj, 'parent2') and obj.parent2 is not None:
                 self._update_connection_line(obj, obj.parent2)
             
@@ -268,7 +273,7 @@ class PandaRender(ShowBase):
         """
         return globalClock.getFrameTime()
     
-    def getNoise(self,time):
+    def getNoise(self, time):
         """
         Devuelve un valor de ruido interpolado
         """

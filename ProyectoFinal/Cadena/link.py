@@ -6,10 +6,11 @@ from typing import Optional
 
 class Link:
     def __init__(
-            self, 
+            self,
             pos:list[float,float,float], 
             vel:list[float,float,float], 
             m:float, 
+            name:str = "Link", 
             padre1:Optional['Link'] = None,
             padre2:Optional['Link'] = None
             ):
@@ -20,6 +21,7 @@ class Link:
             - pos (list[float, float, float]) : Posicion inicial
             - vel (list[float, float, float]) : Velocidad inicial
             - m (float) : Masa
+            - name (str) : Nombre identificador
             - padre1 (None | Link) : Referencia al Link padre1
             - padre2 (None | Link) : Referencia al Link padre2
         """
